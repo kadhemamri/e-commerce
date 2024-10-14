@@ -1,0 +1,42 @@
+stages:
+  - build
+  - test
+  - deploy
+
+variables:
+  SONAR_TOKEN: $SONAR_TOKEN
+
+before_script:
+  - echo "Setting up environment..."
+
+build:
+  stage: build
+  script:
+    - echo "Building the project..."
+    - ./gradlew build
+
+test:
+  stage: test
+  script:
+    - echo "Running tests..."
+    - ./gradlew test
+
+deploy:
+  stage: deploy
+  script:
+    - echo "Deploying to Docker Hub..."
+    - docker build -t my-dockerhub-username/my-image:latest .
+    - docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+    - docker push my-dockerhub-username/my-image:latest
+    - echo "Deployed to Docker Hub"
+  only:
+    - master
+
+sonarqube:
+  stage: test
+  image: sonarsource/sonar-scanner-cli:latest
+  script:
+    - sonar-scanner -Dsonar.projectKey=your-project-key -Dsonar.sources=.
+  only:
+    - merge_requests
+    - master
